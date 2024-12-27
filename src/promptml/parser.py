@@ -6,6 +6,15 @@ class PromptMLTransformer(Transformer):
     """
     A class for transforming the parsed PromptML tree into a Python dictionary.
     """
+    
+    def __init__(self, user_input):
+        """
+        Initialize the transformer with user input.
+        Args:
+            user_input (dict): Dictionary of user-provided inputs.
+        """
+        super().__init__()
+        self.user_input = user_input
 
     def start(self, items):
         """ Extract the start section content."""
@@ -39,10 +48,17 @@ class PromptMLTransformer(Transformer):
         condition_var = items[0]
         block_if = items[1:]
         block_else = items[3:]
+        print(self.user_input)
+        print(type(condition_var.children[1]))
+        print(type(condition_var.children[1].strip()))
+        condition_value = condition_var.children[1].strip()
+        
 
-        if condition_var.children[1] == "true":
+        if condition_value:
+            print("True")
             return self.transform_block(block_if)
         else:
+            print("FFalse")
             return self.transform_block(block_else)
 
     def transform_block(self, block_items):
@@ -64,7 +80,8 @@ class PromptMLTransformer(Transformer):
             var_map[var_symbol] = var_value
 
         # Store the variables globally
-        globals()['vars_'] = var_map  # Using global so it can be accessed in other methods
+        globals()['vars_'] = var_map
+        print(var_map)
 
         return {"type": "vars", "data": var_map}
 
@@ -144,21 +161,22 @@ class PromptMLTransformer(Transformer):
 class PromptParser:
     """A class for parsing prompt markup language code and extract information.
     """
-    transformer = PromptMLTransformer()
 
-    def __init__(self, code: str):
+    def __init__(self, code: str, user_input={}):
         promptml_grammar = None
         # get current directory
         dir_path = os.path.abspath(os.path.dirname(__file__))
         with open(f'{dir_path}/grammar.lark', 'r', encoding="utf-8") as f:
             promptml_grammar = f.read()
-
+        
+        self.user_input = user_input
         self.code = code
         self.prompt = {}
         self.parser = Lark(promptml_grammar)
         self.xml_serializer = SerializerFactory.create_serializer("xml")
         self.json_serializer = SerializerFactory.create_serializer("json")
         self.yaml_serializer = SerializerFactory.create_serializer("yaml")
+        self.transformer = PromptMLTransformer(user_input) 
 
     def parse(self):
         """
@@ -175,7 +193,7 @@ class PromptParser:
         Parse the prompt section of the DSL code and extract the prompt content.
         """
         tree = self.parser.parse(self.code)
-        self.prompt = PromptParser.transformer.transform(tree)
+        self.prompt = self.transformer.transform(tree)
         return self.prompt
 
     

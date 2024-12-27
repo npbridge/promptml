@@ -3,6 +3,7 @@ from src.promptml.parser import PromptParser
 promptml_code = '''
 @vars
     conditionVar = "true"
+    NextVar = "ABC"
 @end
 
 @prompt
@@ -16,7 +17,7 @@ promptml_code = '''
         Achieve this objective based on the condition.
     @end
 
-    @if conditionVar == "ABC" {
+    @if conditionVar == "true" {
         @objective 
             Achieve this objective based on the condition.
         @end
@@ -26,7 +27,7 @@ promptml_code = '''
     }
 @end
 '''
-parser = PromptParser(promptml_code)
+parser = PromptParser(promptml_code, user_input={"EDUCATION_LEVEL": "high school"})
 prompt = parser.parse()
 
 print(prompt)
